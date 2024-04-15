@@ -288,7 +288,7 @@ plt.plot(t_train,np.mean(x_pred, axis=(0, 2)),label='Predicted displacement')
 plt.plot(t_train, x_train,'r',label='Actual displacement')
 plt.legend()
 #%%
-x_pred, f_pred, logc_pred, logk_pred = model.predict(t_train, samples, processes, pde_fn=pde_fn)
+
 import seaborn as sns
 sns.set_theme()
 sns.set_style("whitegrid")
@@ -328,16 +328,3 @@ neuq.utils.hist(np.exp(logk_pred).flatten(), bins=30, name="value of $k$")
 neuq.utils.hist(np.exp(logc_pred).flatten(), bins=30,  name="value of $c$")
 neuq.utils.hist(Uz_pred.flatten(), bins=30,  name="value of $U(z)$")
 #%%
-f_mean = np.mean(800*f_pred, axis=0)
-f_std = np.std(800*f_pred, axis=0)
-plt.plot(t_train, f_train, label='True force')
-plt.plot(t_train, f_mean, "r--", label="Predicted force")
-
-# plt.plot(t_train, f_mean-2*f_std, "r--", label="mean")
-# plt.plot(t_train, f_mean+2*f_std, "r--", label="mean")
-
-plt.fill_between( t_train.flatten(),
-                 f_mean.flatten() - 2 * np.sqrt(f_std.flatten()**2), 
-                 f_mean.flatten() + 2 * np.sqrt(f_std.flatten()**2), alpha=0.3,
-facecolor="r",
-label="2 $\\bar{\\sigma}$")
