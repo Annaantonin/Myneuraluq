@@ -121,16 +121,17 @@ def pde_fn(t, x, f, log_c, log_k, *angles):
     x_tt=f-(0.245*tf.exp(log_c)*x_t + 27000*tf.exp(log_k)*x)
     return x_tt/m
     
-def pde_Spec(t, f, Uz, *angles):
+def pde_Spec(t, f, phi, *angles):
     w = tf.linspace(0.01, 10.0, 1000)  # Frequency array, example values
     # phi=phi[0:w.shape[0]]
     # phi = tf.random.uniform(shape=[w.shape[0]], minval=0, maxval=2*np.pi, dtype=tf.float32)
     phi=tf.concat(angles, 0)
     print(phi)
     # Uz=1.37/0.4*np.log(30/2) 
+    Uz=9.27  # Consider known for this example
+    
     dw = w[1] - w[0]  # Frequency spacing
-     # phi=var_list[0:w.shape[0]]
-    Lv=1.72
+    Lv=1.72#  integral length scale parameter/ slowly-varying mean Uz
     S=6.868*w*Lv/((1+10.302*w*Lv)**(5/3)) # Compute Sw tensor
     Sw=(1.2*8*0.12*Uz**2)**2*S  
        
@@ -219,21 +220,21 @@ def Trainable(
     loss_init = neuq.likelihoods.MSE(
         inputs=t_train[0:1],
         targets=[0,0], 
-        processes=[process_x], # tf train
+        processes=[process_x], 
         pde=pde_init,
         multiplier=1,
     )
-    loss_x = neuq.likelihoods.MSE(   #Loss xtt
+    loss_x = neuq.likelihoods.MSE(   
         inputs=t_train,
         targets=x_tt_train,
         processes=[process_x],
-        pde=pde_xtt, # dotdot _X
+        pde=pde_xtt, 
         multiplier=1,
     )    
     
     loss_f = neuq.likelihoods.MSE(
         inputs=t_train,
-        targets=x_tt_train, # minimizing the loss to be close to zero
+        targets=x_tt_train, 
         # targets=np.zeros_like(t_train), # minimizing the loss to be close to zero
         processes=[process_x, process_f,  process_log_c, process_log_k, phi], # tf train
         pde=pde_fn,
@@ -241,15 +242,18 @@ def Trainable(
     )
     
     loss_force = neuq.likelihoods.MSE(   #Loss xtt
-        inputs=t_train , # Frequency array, example values,
+        inputs=t_train , # or frequencies array
         targets=np.zeros_like(t_train),
         processes=[process_f, phi],
-        pde=pde_Spec, # dotdot _X
+        pde=pde_Spec, 
         multiplier=1,
     )   
     
     
-    likelihoods=[loss_init, loss_x, loss_f, loss_force]
+    likelihoods=[loss_init, 
+                 loss_x, 
+                 loss_f, 
+                 loss_force]
     processes=[process_x, process_f, process_log_c, process_log_k, phi]
      # processes=[process_f]
  
