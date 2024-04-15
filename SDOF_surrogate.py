@@ -24,8 +24,7 @@ import matplotlib.pyplot as plt
 
 #%%
 def load_data(noise):
-    # data = sio.loadmat("Data/sdof_tower.mat")
-    data = sio.loadmat(r"G:\My Drive\CU_work\PINN project\sdof_tower.mat")
+    data = sio.loadmat("Data/sdof_tower.mat")
     x_tt_train, t_train = data["a"], data["t"]
     x_train, f_train = data["u"], data["pf"]
     
