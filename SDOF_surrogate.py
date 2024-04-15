@@ -259,8 +259,8 @@ def Trainable(
  
     # build model
     model = neuq.models.Model(
-        processes=[process_x, process_f, process_log_c, process_log_k,  phi],
-        likelihoods=[loss_init, loss_x, loss_f, loss_force],
+        processes=processes,
+        likelihoods=likelihoods,
     )
     model.compile(method)
 
