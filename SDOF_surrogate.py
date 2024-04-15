@@ -117,10 +117,8 @@ def pde_xtt(t,x,*args):
 
 def pde_fn(t, x, f, log_c, log_k, *angles):
     m=4500
-    # log_c=tf.clip_by_value(log_c,  clip_value_min=-2.3, clip_value_max=-1.35)
-    # log_k=tf.clip_by_value(log_k, clip_value_min=-0.6, clip_value_max=0.18) # to make constraints for the parameters
     x_t = tf.gradients(x, t)      [0] [..., 0:1]     #velocity                                                                                                                                                                                                                   
-    x_tt=f-(tf.exp(log_c)*x_t + 27000*tf.exp(log_k)*x)
+    x_tt=f-(0.245*tf.exp(log_c)*x_t + 27000*tf.exp(log_k)*x)
     return x_tt/m
     
 def pde_Spec(t, f, Uz, *angles):
@@ -176,17 +174,15 @@ def WindSurrogate(inputs, var_list):
 def Trainable(
     x_tt_train, t_train, x_train, f_train, noise, layers, layers_phi
 ):
-    # build processes
-    
+       
     process_x = neuq.process.Process(
         surrogate=neuq.surrogates.FNN(layers=layers, activation= tf.math.sin),
-        # surrogate=neuq.surrogates.FNN(layers=layers,activation=RELu),
         posterior=neuq_vars.fnn.Trainable(layers=layers),# displacement
       )   
            
     # process_f = neuq.process.Process(
     #     surrogate=neuq.surrogates.FNN(layers=layers),
-    #     posterior=neuq_vars.fnn.Trainable(layers=layers),# force
+    #     posterior=neuq_vars.fnn.Trainable(layers=layers), # force
     # ) 
     process_f = neuq.process.Process(
         surrogate=WindSurrogate, 
@@ -195,16 +191,16 @@ def Trainable(
   
     process_log_c = neuq.process.Process(
         surrogate=neuq.surrogates.Identity(),
-        posterior=neuq_vars.const.Trainable(value=-1.4),
+        posterior=neuq_vars.const.Trainable(value=0.1),
     )
     process_log_k = neuq.process.Process(
         surrogate=neuq.surrogates.Identity(),
-        posterior=neuq_vars.const.Trainable(value=-0.1),
+        posterior=neuq_vars.const.Trainable(value=0.1),
     )
     
     phi= neuq.process.Process(
         surrogate=neuq.surrogates.Identity(),
-        posterior=neuq_vars.const.Trainable(value=0),
+        posterior=neuq_vars.const.Trainable(value=10),
     )
     
     # phi=[]
@@ -214,7 +210,6 @@ def Trainable(
             posterior=neuq_vars.const.Trainable(value=2*np.pi),       )
         # phi[i]=phi
     phi.append(new)
-    
     
     method = neuq.inferences.DEns(
         num_samples=1, num_iterations=20000, optimizer=tf.train.AdamOptimizer(1e-3),
@@ -263,12 +258,9 @@ def Trainable(
         processes=[process_x, process_f, process_log_c, process_log_k,  phi],
         likelihoods=[loss_init, loss_x, loss_f, loss_force],
     )
-    # assign and compile method
     model.compile(method)
-    # obtain posterior samples
+
     samples = model.run()
-    # samples,results = model.run()
-    # print("Acceptance rate: %.3f \n" % (np.mean(results)))
     processes=processes 
     likelihoods=likelihoods
     # likelihoods=[]
@@ -280,9 +272,6 @@ if __name__ == "__main__":
     noise = 0
 
     x_tt_train, t_train, x_train, f_train = load_data(noise)
-
-    # t_x_tt_train, x_tt_train = train_x_tt
-    # t_f_train, f_train = train_f
 
     layers = [1, 20, 20,  1]
     layer_phi=[1,100,1]
